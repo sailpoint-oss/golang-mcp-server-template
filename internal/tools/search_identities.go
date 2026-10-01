@@ -57,6 +57,10 @@ func RegisterSearchIdentities(server *mcp.Server) error {
 	if err != nil {
 		return err
 	}
+	outputSchema, err := searchIdentitiesOutputSchema()
+	if err != nil {
+		return err
+	}
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name:  "search_identities",
@@ -64,7 +68,8 @@ func RegisterSearchIdentities(server *mcp.Server) error {
 		Description: "Search identities in SailPoint Identity Security Cloud using the search API. " +
 			"Use this to find users by name, email, attribute, lifecycle state, manager, source, or entitlement/role access. " +
 			"Returns matching identity documents from the 'identities' index.",
-		InputSchema: schema,
+		InputSchema:  schema,
+		OutputSchema: outputSchema,
 		Annotations: &mcp.ToolAnnotations{
 			ReadOnlyHint:  true,
 			OpenWorldHint: boolPtr(true),
@@ -153,7 +158,43 @@ func searchIdentitiesSchema() (*jsonschema.Schema, error) {
 
 	schema.Properties["offset"].Minimum = floatPtr(0)
 
+	dropNullTypes(schema)
+
 	return schema, nil
+}
+
+// searchIdentitiesOutputSchema infers the schema from SearchIdentitiesResult.
+// It is built here rather than left to the SDK so dropNullTypes can run on it.
+func searchIdentitiesOutputSchema() (*jsonschema.Schema, error) {
+	schema, err := jsonschema.For[SearchIdentitiesResult](nil)
+	if err != nil {
+		return nil, fmt.Errorf("search_identities output schema: %w", err)
+	}
+
+	dropNullTypes(schema)
+
+	return schema, nil
+}
+
+// dropNullTypes rewrites properties inferred as {"type": ["null", X]} to
+// {"type": X}. Inference treats every slice and pointer as nullable, but none of
+// these fields is ever null on the wire: optional inputs are omitted, the
+// identities slice is always non-nil, and a nil totalCount is omitted. The
+// array form of "type" is also rejected by clients that map tool schemas onto a
+// single-type dialect (such as Gemini function declarations).
+func dropNullTypes(schema *jsonschema.Schema) {
+	for _, property := range schema.Properties {
+		var nonNull []string
+		for _, t := range property.Types {
+			if t != "null" {
+				nonNull = append(nonNull, t)
+			}
+		}
+		if len(nonNull) == 1 && len(property.Types) == 2 {
+			property.Type = nonNull[0]
+			property.Types = nil
+		}
+	}
 }
 
 // totalCount reads the X-Total-Count header the search API sets when count=true.

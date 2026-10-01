@@ -27,6 +27,14 @@ func main() {
 }
 
 func run(ctx context.Context, stdout *os.File) error {
+	envPath, err := sailpoint.LoadDotEnv()
+	if err != nil {
+		return err
+	}
+	if envPath != "" {
+		logger.Log("loaded credentials from", envPath)
+	}
+
 	// Fail fast with a clear message instead of on the first tool call.
 	if _, err := sailpoint.Client(); err != nil {
 		return err

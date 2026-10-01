@@ -29,23 +29,22 @@ Requires Go 1.25+.
 
 ## Configuration
 
-Credentials are resolved by the SailPoint SDK, in this order:
-
-1. Environment variables — `SAIL_BASE_URL`, `SAIL_CLIENT_ID`, `SAIL_CLIENT_SECRET`
-2. `./config.json` — `{ "BaseURL": "...", "ClientId": "...", "ClientSecret": "..." }`
-   (looked for next to the binary and in the working directory)
-3. `~/.sailpoint/config.yaml` — the PAT block of the active environment (deprecated
-   by the SDK)
-
-Environment variables are the recommended path for an MCP server. Create a
+Credentials are read from `SAIL_BASE_URL`, `SAIL_CLIENT_ID` and
+`SAIL_CLIENT_SECRET`. At startup the server loads them from `.env` in the
+project root. Create a
 personal access token in your tenant under **Preferences → Personal Access
 Tokens**; it needs a role that can read identities (e.g. `sp:scopes:all` or
 an admin/helpdesk role).
 
 ```bash
-cp .env.example .env             # then fill it in and export the values
-cp config.json.example config.json   # or use the file-based path
+cp .env.example .env   # then fill in your three values
+chmod 600 .env
 ```
+
+The server loads `.env` from its own project folder, so it works no matter which
+directory the MCP client launches it from. Keep the file private: it is
+gitignored, and `chmod 600 .env` makes it readable only by you. Variables set in
+your shell or in an MCP client's `env` block take precedence over `.env`.
 
 The server validates the resolved base URL, client ID, client secret and token
 URL at startup and exits with a descriptive message if any are missing, rather
@@ -69,12 +68,7 @@ claude mcp add sailpoint -- /absolute/path/to/golang-mcp-server-template/bin/sai
 {
   "mcpServers": {
     "sailpoint": {
-      "command": "/absolute/path/to/golang-mcp-server-template/bin/sailpoint-mcp-server",
-      "env": {
-        "SAIL_BASE_URL": "https://your-tenant.api.identitynow.com",
-        "SAIL_CLIENT_ID": "...",
-        "SAIL_CLIENT_SECRET": "..."
-      }
+      "command": "/absolute/path/to/golang-mcp-server-template/bin/sailpoint-mcp-server"
     }
   }
 }

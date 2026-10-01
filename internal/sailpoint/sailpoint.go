@@ -10,13 +10,14 @@ import (
 	sdk "github.com/sailpoint-oss/golang-sdk/v3"
 )
 
-const setupHint = "Set SAIL_BASE_URL, SAIL_CLIENT_ID and SAIL_CLIENT_SECRET (a personal " +
-	"access token pair from your tenant), or provide ./config.json or a PAT-based " +
-	"~/.sailpoint/config.yaml. See README.md."
+const setupHint = "Copy .env.example to .env and set SAIL_BASE_URL, SAIL_CLIENT_ID and " +
+	"SAIL_CLIENT_SECRET (a personal access token pair from your tenant), or pass them in " +
+	"your MCP client's env block. See README.md."
 
-// NewConfiguration resolves credentials the way the SailPoint SDK does — SAIL_*
-// environment variables, then ./config.json, then ~/.sailpoint/config.yaml — and
-// validates that the pieces we actually need came back.
+// NewConfiguration resolves credentials from the SAIL_* environment variables
+// (populated from .env by LoadDotEnv at startup) and validates that the pieces
+// we actually need came back. The SDK would also fall back to ./config.json and
+// ~/.sailpoint/config.yaml; this template does not use them.
 //
 // The SDK resolves partial configs silently (an OAuth-flavoured config.yaml
 // yields a base URL but no client credentials), and it panics rather than

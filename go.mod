@@ -5,6 +5,7 @@ go 1.25.5
 require (
 	github.com/google/jsonschema-go v0.4.3
 	github.com/hashicorp/go-retryablehttp v0.7.8
+	github.com/joho/godotenv v1.5.1
 	github.com/modelcontextprotocol/go-sdk v1.7.0
 	github.com/sailpoint-oss/golang-sdk/v3 v3.1.14
 )
